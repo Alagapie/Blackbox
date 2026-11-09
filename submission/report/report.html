@@ -36,7 +36,7 @@ h3.light { color: #666; }
 p { margin: 0 0 7pt; orphans: 3; widows: 3; }
 ul, ol { margin: 2pt 0 7pt; padding-left: 20pt; } li { margin: 2pt 0; }
 b, strong { font-weight: 700; }
-code { font: 0.95em "Inconsolata", Consolas, monospace; }
+code { font: 0.95em "Inconsolata", Consolas, monospace; white-space: nowrap; }
 
 /* ---- tables & figures ---- */
 figure { margin: 10pt 0 11pt; break-inside: avoid; }
@@ -57,6 +57,7 @@ td.num, th.num { text-align: right; }
 .appendix { break-before: page; }
 .shot { width: 100%; border: 0.5pt solid #888; display: block; }
 .cmd { font: 8.6pt/1.6 "Inconsolata", Consolas, monospace; border-left: 1.5pt solid #999; padding: 2pt 0 2pt 9pt; margin: 4pt 0 9pt; text-align: left; }
+.cmd code { white-space: normal; }
 svg text { font-family: "Source Sans 3", Arial, sans-serif; }
 </style>
 </head>
@@ -170,7 +171,7 @@ integrity does not depend on the agent’s cooperation.</p>
   <text x="330" y="169" font-size="9" fill="#1f3a68" font-weight="600">local log vs ledger · tamper attempts · report vs record (rules + LLM)</text>
   <rect x="316" y="194" width="344" height="26" rx="2" fill="#fff" stroke="#9a9a9a"/><text x="330" y="211" font-size="9.5" fill="#111111"><tspan font-weight="700">M7 Dashboard</tspan><tspan fill="#444444">  · live record, verdict, findings for humans</tspan></text>
   <path d="M218 128 C 262 128, 270 84, 312 80" fill="none" stroke="#1f3a68" stroke-width="2" marker-end="url(#ar)"/>
-  <text x="268" y="130" font-size="9" font-weight="700" fill="#1f3a68">1. record</text>
+  <text x="244" y="137" font-size="9" font-weight="700" fill="#1f3a68">1. record</text>
   <path d="M218 195 C 262 195, 280 165, 312 160" fill="none" stroke="#777777" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#ag)"/>
   <text x="236" y="212" font-size="9" fill="#444444">compared</text>
   <line x1="404" y1="106" x2="404" y2="122" stroke="#777777" stroke-width="1.4" marker-end="url(#ag)"/>
