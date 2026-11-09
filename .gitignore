@@ -9,3 +9,5 @@ data/
 .env
 .venv/
 submission/video/_build/
+# Office lock files (created while a document is open)
+~$*

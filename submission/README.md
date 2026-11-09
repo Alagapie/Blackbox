@@ -9,11 +9,12 @@
 
 ## Before submitting
 
-1. Author is set to Abdulbasit Uleiman, Independent Researcher (edit the title block in `report/report.html` to change it).
-2. After any edit, re-export the PDF (command below).
-3. If the hackathon's official template is a Word/LaTeX/Google Docs file, copy the sections across in the same
-   order: title, authors, abstract, sections 1–8, references, then Appendix A (the required
-   "Limitations and Dual-Use / Ethical Considerations"), B, C, D.
+The report follows the official Apart Research submission template (cover page, sections 1–6, Code and Data,
+References, Appendix A–D, LLM Usage Statement).
+
+1. Author is set to Abdulbasit Suleiman, Independent Researcher (edit the cover in `report/report.html` to change it).
+2. Replace the yellow `[GitHub link]` placeholder under "Code and Data" once the repo exists.
+3. After any edit, re-export the PDF (command below).
 
 ## Re-export the PDF
 
