@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blackbox Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f5fa; --bg-grad: radial-gradient(1200px 600px at 10% -10%, #e6e9ff 0%, transparent 60%), radial-gradient(900px 500px at 100% 0%, #f3e8ff 0%, transparent 55%);
+  --card: #ffffff; --card-2: #f7f8fc; --line: #e7e9f2; --line-2: #d9dce8;
+  --text: #121528; --muted: #5b6178; --faint: #9197ab;
+  --accent: #5146e5; --accent-2: #7c5cf6; --accent-soft: #eeedfd; --accent-ink: #ffffff;
+  --ok: #0f8a5f; --ok-soft: #e3f6ee; --warn: #b26a00; --warn-soft: #fdf3e1;
+  --high: #d24d12; --high-soft: #fdece3; --crit: #d0263c; --crit-soft: #fde8eb;
+  --info: #4d5570; --info-soft: #eef0f6;
+  --shadow: 0 1px 2px rgba(18,21,40,.04), 0 4px 16px rgba(18,21,40,.05);
+  --shadow-lg: 0 2px 4px rgba(18,21,40,.04), 0 12px 32px rgba(18,21,40,.08);
+  --sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b0d16; --bg-grad: radial-gradient(1200px 600px at 10% -10%, #1b1d42 0%, transparent 60%), radial-gradient(900px 500px at 100% 0%, #2a1840 0%, transparent 55%);
+    --card: #141726; --card-2: #1a1e30; --line: #252a40; --line-2: #31374f;
+    --text: #eceefa; --muted: #a3a9c2; --faint: #6d738d;
+    --accent: #8b84ff; --accent-2: #a98bff; --accent-soft: #23224a; --accent-ink: #0b0d16;
+    --ok: #3fd69a; --ok-soft: #10291f; --warn: #f4b950; --warn-soft: #2c2210;
+    --high: #ff925e; --high-soft: #2f1a10; --crit: #ff6b80; --crit-soft: #331520;
+    --info: #b5bbd3; --info-soft: #20243a;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+    --shadow-lg: 0 2px 4px rgba(0,0,0,.3), 0 12px 32px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b0d16; --bg-grad: radial-gradient(1200px 600px at 10% -10%, #1b1d42 0%, transparent 60%), radial-gradient(900px 500px at 100% 0%, #2a1840 0%, transparent 55%);
+  --card: #141726; --card-2: #1a1e30; --line: #252a40; --line-2: #31374f;
+  --text: #eceefa; --muted: #a3a9c2; --faint: #6d738d;
+  --accent: #8b84ff; --accent-2: #a98bff; --accent-soft: #23224a; --accent-ink: #0b0d16;
+  --ok: #3fd69a; --ok-soft: #10291f; --warn: #f4b950; --warn-soft: #2c2210;
+  --high: #ff925e; --high-soft: #2f1a10; --crit: #ff6b80; --crit-soft: #331520;
+  --info: #b5bbd3; --info-soft: #20243a;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+  --shadow-lg: 0 2px 4px rgba(0,0,0,.3), 0 12px 32px rgba(0,0,0,.35);
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body { background: var(--bg); background-image: var(--bg-grad); background-attachment: fixed; color: var(--text);
+  font: 14px/1.5 var(--sans); -webkit-font-smoothing: antialiased; min-height: 100vh; }
+button { font: inherit; color: inherit; }
+svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mono { font-family: var(--mono); font-size: 12px; }
+
+/* ---------- top bar ---------- */
+.topbar { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  background: color-mix(in srgb, var(--card) 78%, transparent); border-bottom: 1px solid var(--line); }
+.topbar-in { max-width: 1440px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 12px; margin-right: auto; }
+.logo { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 40%, transparent); }
+.brand b { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; display: block; line-height: 1.1; }
+.brand small { color: var(--muted); font-size: 12.5px; }
+.health { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 99px; font-size: 12.5px; font-weight: 500;
+  background: var(--card); border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+.chip .dot.on { background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 22%, transparent); }
+.chip .dot.off { background: var(--crit); box-shadow: 0 0 0 3px color-mix(in srgb, var(--crit) 22%, transparent); }
+.iconbtn { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--card); color: var(--muted); cursor: pointer; }
+.iconbtn:hover { color: var(--text); border-color: var(--line-2); }
+
+/* ---------- layout ---------- */
+.wrap { max-width: 1440px; margin: 0 auto; padding: 24px; }
+.grid { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 24px; align-items: start; margin-top: 24px; }
+.side { position: sticky; top: 84px; display: flex; flex-direction: column; gap: 16px; max-height: calc(100vh - 100px); }
+.content { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+@media (max-width: 1080px) { .grid { grid-template-columns: 1fr; } .side { position: static; max-height: none; } }
+@media (max-width: 640px) { .wrap { padding: 16px; } .topbar-in { padding: 10px 16px; } .brand small { display: none; } }
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); min-width: 0; }
+.card-h { display: flex; align-items: center; gap: 10px; padding: 16px 18px 0; flex-wrap: wrap; }
+.card-h h2 { font-size: 15px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+.card-h .hint { color: var(--muted); font-size: 12.5px; }
+.card-b { padding: 14px 18px 18px; }
+.count-pill { font-size: 11.5px; font-weight: 600; padding: 1px 8px; border-radius: 99px; background: var(--card-2); color: var(--muted); border: 1px solid var(--line); }
+
+/* ---------- hero ---------- */
+.hero { position: relative; overflow: hidden; border-radius: 20px; padding: 26px 28px; border: 1px solid var(--line);
+  background: var(--card); box-shadow: var(--shadow-lg); display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: center; }
+.hero::before { content: ""; position: absolute; inset: 0; opacity: .9; pointer-events: none;
+  background: linear-gradient(110deg, var(--tone-soft) 0%, transparent 65%); }
+.hero > * { position: relative; }
+.hero { --tone: var(--faint); --tone-soft: var(--info-soft); }
+.hero.VERIFIED { --tone: var(--ok); --tone-soft: var(--ok-soft); }
+.hero.SUSPICIOUS { --tone: var(--warn); --tone-soft: var(--warn-soft); }
+.hero.TAMPERED { --tone: var(--crit); --tone-soft: var(--crit-soft); }
+.hero-icon { width: 76px; height: 76px; border-radius: 22px; display: grid; place-items: center; color: var(--tone);
+  background: var(--card); border: 1px solid color-mix(in srgb, var(--tone) 30%, var(--line));
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--tone) 25%, transparent); }
+.hero-icon svg.i { width: 38px; height: 38px; stroke-width: 1.8; }
+.hero.TAMPERED .hero-icon { animation: pulse 2.2s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 8px 40px color-mix(in srgb, var(--tone) 45%, transparent); } }
+.eyebrow { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--tone); }
+.hero h1 { margin: 2px 0 6px; font-size: clamp(22px, 3vw, 30px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.15; }
+.hero p { margin: 0; color: var(--muted); font-size: 14.5px; max-width: 760px; }
+.stats { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 4px; }
+@media (max-width: 760px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hero { grid-template-columns: 1fr; padding: 22px; } }
+.stat { background: color-mix(in srgb, var(--card) 85%, transparent); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; min-width: 0; }
+.stat small { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 500; }
+.stat small svg.i { width: 14px; height: 14px; }
+.stat b { display: block; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat b.good { color: var(--ok); } .stat b.bad { color: var(--crit); } .stat b.warn { color: var(--warn); }
+
+/* ---------- control room ---------- */
+.tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; margin: 14px 18px 0; border-radius: 12px; background: var(--card-2); border: 1px solid var(--line); }
+.tab { border: 0; background: transparent; padding: 8px 6px; border-radius: 9px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted);
+  display: flex; align-items: center; justify-content: center; gap: 6px; }
+.tab .n { width: 18px; height: 18px; border-radius: 50%; font-size: 11px; display: grid; place-items: center; background: var(--line); color: var(--muted); }
+.tab.on { background: var(--card); color: var(--text); box-shadow: var(--shadow); }
+.tab.on .n { background: var(--accent); color: var(--accent-ink); }
+.pane { display: none; } .pane.on { display: block; }
+.pane-intro { font-size: 13px; color: var(--muted); margin: 0 0 12px; }
+.group-label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--faint); margin: 16px 0 8px; display: flex; align-items: center; gap: 8px; }
+.group-label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.action { width: 100%; display: flex; gap: 12px; align-items: center; text-align: left; padding: 11px 12px; margin-bottom: 8px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--card); cursor: pointer; transition: border-color .15s, transform .15s, box-shadow .15s; }
+.action:hover:not(:disabled) { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); box-shadow: var(--shadow); transform: translateY(-1px); }
+.action:disabled { opacity: .6; cursor: progress; }
+.action .ico { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; flex: none; background: var(--accent-soft); color: var(--accent); }
+.action.danger .ico { background: var(--crit-soft); color: var(--crit); }
+.action.warnish .ico { background: var(--high-soft); color: var(--high); }
+.action .txt { min-width: 0; flex: 1; }
+.action .t { font-weight: 600; font-size: 13.5px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.action .d { color: var(--muted); font-size: 12.5px; line-height: 1.4; margin-top: 1px; }
+.action .go { color: var(--faint); }
+.badge { font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 99px; text-transform: uppercase; letter-spacing: .04em; }
+.badge.muse { background: var(--accent-soft); color: var(--accent); }
+.badge.script { background: var(--info-soft); color: var(--info); }
+.badge.star { background: var(--ok-soft); color: var(--ok); }
+.cta { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 12px; border: 0; cursor: pointer;
+  font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 35%, transparent); }
+.cta:disabled { opacity: .7; cursor: progress; }
+.steps { margin: 0 0 4px; padding: 12px 14px; border-radius: 12px; background: var(--accent-soft); color: var(--text); font-size: 12.5px; }
+.steps b { color: var(--accent); }
+.steps ol { margin: 6px 0 0; padding-left: 18px; color: var(--muted); }
+.steps li { margin: 2px 0; }
+.spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid color-mix(in srgb, currentColor 25%, transparent); border-top-color: currentColor; animation: spin .8s linear infinite; flex: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* activity */
+.side .activity { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.side .activity .card-b { overflow: auto; }
+.act { display: flex; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 13px; }
+.act:first-child { border-top: 0; padding-top: 0; }
+.act .st { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; flex: none; margin-top: 1px; }
+.act .st svg.i { width: 13px; height: 13px; stroke-width: 2.6; }
+.act .st.done { background: var(--ok-soft); color: var(--ok); } .act .st.error { background: var(--crit-soft); color: var(--crit); }
+.act .st.running { background: var(--accent-soft); color: var(--accent); }
+.act .body { min-width: 0; flex: 1; }
+.act .top { display: flex; gap: 6px; align-items: baseline; }
+.act .top b { font-weight: 600; } .act .top time { margin-left: auto; color: var(--faint); font-size: 11.5px; }
+.act .last { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.act details summary { cursor: pointer; color: var(--accent); font-size: 12px; list-style: none; margin-top: 2px; }
+.act pre { margin: 6px 0 0; padding: 8px 10px; border-radius: 8px; background: var(--card-2); font: 11.5px/1.5 var(--mono); color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 180px; overflow: auto; }
+
+/* ---------- sessions ---------- */
+.sessions { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.sess { text-align: left; cursor: pointer; padding: 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--card);
+  display: flex; flex-direction: column; gap: 8px; transition: border-color .15s, box-shadow .15s; position: relative; --tone: var(--ok); --tone-soft: var(--ok-soft); }
+.sess:hover { box-shadow: var(--shadow-lg); }
+.sess.sel { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.sess.suspicious { --tone: var(--warn); --tone-soft: var(--warn-soft); }
+.sess.caught { --tone: var(--crit); --tone-soft: var(--crit-soft); }
+.sess.running { --tone: var(--accent); --tone-soft: var(--accent-soft); }
+.sess::before { content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 0 3px 3px 0; background: var(--tone); }
+.sess .row1 { display: flex; align-items: center; gap: 8px; }
+.sess .av { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; background: var(--tone-soft); color: var(--tone); flex: none; }
+.sess .name { font-weight: 700; font-size: 14px; line-height: 1.2; }
+.sess .sid { color: var(--faint); font-size: 11px; font-family: var(--mono); }
+.verdict { margin-left: auto; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 99px; background: var(--tone-soft); color: var(--tone); white-space: nowrap; display: inline-flex; gap: 5px; align-items: center; }
+.sess .meta { display: flex; gap: 10px; color: var(--muted); font-size: 12px; flex-wrap: wrap; }
+.sess .meta span { display: inline-flex; align-items: center; gap: 4px; }
+.sess .meta svg.i { width: 13px; height: 13px; }
+.quote { font-size: 12.5px; color: var(--muted); background: var(--card-2); border-radius: 10px; padding: 8px 10px; border-left: 3px solid var(--line-2);
+  overflow-wrap: anywhere; }
+.ai { font-size: 11.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 99px; width: fit-content; }
+.ai svg.i { width: 12px; height: 12px; }
+.ai.honest { background: var(--ok-soft); color: var(--ok); } .ai.incomplete { background: var(--warn-soft); color: var(--warn); }
+.ai.deceptive { background: var(--crit-soft); color: var(--crit); }
+.filterbar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); font-size: 13px; font-weight: 600; }
+.filterbar button { margin-left: auto; border: 0; background: transparent; color: inherit; cursor: pointer; font-weight: 600; display: inline-flex; gap: 4px; align-items: center; }
+
+/* ---------- findings ---------- */
+.findings { display: flex; flex-direction: column; gap: 10px; }
+.finding { display: grid; grid-template-columns: auto 1fr; gap: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--card);
+  --tone: var(--info); --tone-soft: var(--info-soft); border-left: 4px solid var(--tone); }
+.finding.critical { --tone: var(--crit); --tone-soft: var(--crit-soft); }
+.finding.high { --tone: var(--high); --tone-soft: var(--high-soft); }
+.finding.warning { --tone: var(--warn); --tone-soft: var(--warn-soft); }
+.finding.good { --tone: var(--ok); --tone-soft: var(--ok-soft); }
+.finding .fi { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--tone-soft); color: var(--tone); }
+.finding .ft { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.finding .ft b { font-size: 14px; font-weight: 700; }
+.sev { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 1px 7px; border-radius: 6px; background: var(--tone-soft); color: var(--tone); }
+.finding .who { color: var(--faint); font-size: 12px; }
+.finding .msg { color: var(--muted); font-size: 13px; margin-top: 3px; overflow-wrap: anywhere; }
+.seqlinks { margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap; }
+.seqlink { font: 11px var(--mono); padding: 1px 6px; border-radius: 5px; border: 1px solid var(--line); background: var(--card-2); color: var(--muted); cursor: pointer; }
+.seqlink:hover { color: var(--accent); border-color: var(--accent); }
+.empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 26px 16px; color: var(--muted); }
+.empty .ei { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: var(--ok-soft); color: var(--ok); }
+.empty.neutral .ei { background: var(--accent-soft); color: var(--accent); }
+.empty b { color: var(--text); }
+.more { border: 0; background: transparent; color: var(--accent); cursor: pointer; font-weight: 600; font-size: 13px; padding: 4px 0; }
+
+/* ---------- timeline ---------- */
+.toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-left: auto; }
+.toggle { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--muted); cursor: pointer; user-select: none; }
+.toggle input { appearance: none; width: 30px; height: 18px; border-radius: 99px; background: var(--line-2); position: relative; cursor: pointer; margin: 0; transition: background .15s; }
+.toggle input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: left .15s; }
+.toggle input:checked { background: var(--accent); } .toggle input:checked::after { left: 14px; }
+.tl { position: relative; max-height: 720px; overflow: auto; padding-right: 4px; }
+.ev { display: grid; grid-template-columns: 34px 1fr; gap: 12px; position: relative; padding: 4px 0; }
+.ev::before { content: ""; position: absolute; left: 16px; top: 0; bottom: 0; width: 2px; background: var(--line); }
+.ev:first-child::before { top: 18px; } .ev:last-child::before { bottom: calc(100% - 18px); }
+.ev .node { position: relative; z-index: 1; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; margin-top: 6px;
+  background: var(--card); border: 2px solid var(--line-2); color: var(--muted); }
+.ev .node svg.i { width: 15px; height: 15px; }
+.ev.k-delete .node, .ev.k-shell .node { color: var(--high); border-color: color-mix(in srgb, var(--high) 45%, var(--line)); }
+.ev.k-report .node { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.ev.k-hb .node { width: 22px; height: 22px; margin: 6px; border-width: 1px; color: var(--faint); }
+.ev.k-hb .node svg.i { width: 11px; height: 11px; }
+.ev .box { min-width: 0; padding: 10px 12px; border-radius: 12px; border: 1px solid transparent; transition: background .3s, border-color .3s; }
+.ev .box:hover { background: var(--card-2); }
+.ev.flag-critical .box { background: var(--crit-soft); border-color: color-mix(in srgb, var(--crit) 30%, transparent); }
+.ev.flag-high .box { background: var(--high-soft); border-color: color-mix(in srgb, var(--high) 30%, transparent); }
+.ev.flag-warning .box { background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 30%, transparent); }
+.ev.flash .box { outline: 2px solid var(--accent); outline-offset: 1px; }
+.ev .line1 { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.ev .what { font-weight: 600; font-size: 13.5px; overflow-wrap: anywhere; }
+.ev .what code { font: 12.5px var(--mono); background: var(--card-2); padding: 1px 5px; border-radius: 5px; border: 1px solid var(--line); }
+.ev .when { margin-left: auto; color: var(--faint); font: 11.5px var(--mono); white-space: nowrap; }
+.ev .line2 { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 4px; font-size: 12px; color: var(--muted); }
+.res { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; font-size: 11.5px; padding: 1px 8px; border-radius: 99px; }
+.res svg.i { width: 12px; height: 12px; stroke-width: 2.6; }
+.res.done { background: var(--ok-soft); color: var(--ok); } .res.failed { background: var(--warn-soft); color: var(--warn); }
+.res.none { background: var(--crit-soft); color: var(--crit); }
+.who-tag { font-size: 11.5px; padding: 1px 8px; border-radius: 99px; background: var(--card-2); border: 1px solid var(--line); color: var(--muted); }
+.flagtag { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 99px; background: var(--tone-soft); color: var(--tone); }
+.flagtag.critical { --tone: var(--crit); --tone-soft: color-mix(in srgb, var(--crit) 15%, var(--card)); }
+.flagtag.high { --tone: var(--high); --tone-soft: color-mix(in srgb, var(--high) 15%, var(--card)); }
+.flagtag.warning { --tone: var(--warn); --tone-soft: color-mix(in srgb, var(--warn) 15%, var(--card)); }
+.ev .report { margin-top: 6px; font-size: 13px; color: var(--text); background: var(--card-2); border-radius: 10px; padding: 8px 12px; border-left: 3px solid var(--accent); }
+.ev details { margin-top: 6px; }
+.ev details summary { cursor: pointer; font-size: 12px; color: var(--faint); list-style: none; display: inline-flex; align-items: center; gap: 4px; }
+.ev details summary:hover { color: var(--accent); }
+.ev details pre { margin: 6px 0 0; padding: 10px; border-radius: 10px; background: var(--card-2); border: 1px solid var(--line); font: 11.5px/1.55 var(--mono); color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 280px; overflow: auto; }
+.gap-row { margin: 6px 0 6px 46px; padding: 10px 14px; border-radius: 12px; border: 2px dashed var(--crit); background: var(--crit-soft); color: var(--crit); font-weight: 700; font-size: 13px; display: flex; gap: 8px; align-items: center; }
+
+#toast { position: fixed; bottom: 22px; left: 50%; transform: translate(-50%, 20px); background: var(--text); color: var(--bg); padding: 12px 18px; border-radius: 12px;
+  max-width: min(640px, calc(100vw - 32px)); font-size: 13px; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; box-shadow: var(--shadow-lg); z-index: 50; }
+#toast.show { opacity: 1; transform: translate(-50%, 0); }
+.banner-err { display: none; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 12px; background: var(--crit-soft); color: var(--crit); font-weight: 600; font-size: 13.5px; margin-top: 16px; }
+.banner-err.show { display: flex; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <div class="logo"><svg class="i" viewBox="0 0 24 24"><use href="#i-box"/></svg></div>
+      <div><b>Blackbox</b><small>A flight recorder for AI agents</small></div>
+    </div>
+    <div class="health">
+      <span class="chip" title="Stores every action. Agents are blocked when it's down."><i class="dot" id="h-ledger"></i>Ledger</span>
+      <span class="chip" title="Independent notary that keeps fingerprints of the ledger."><i class="dot" id="h-witness"></i>Witness</span>
+      <span class="chip" id="h-live"><span class="spinner" style="width:10px;height:10px"></span>Live</span>
+      <button class="iconbtn" id="theme" title="Switch light / dark"><svg class="i" viewBox="0 0 24 24"><use href="#i-moon"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="hero" id="hero">
+    <div class="hero-icon" id="hero-icon"><svg class="i" viewBox="0 0 24 24"><use href="#i-shield"/></svg></div>
+    <div>
+      <div class="eyebrow" id="eyebrow">Connecting</div>
+      <h1 id="headline">Waiting for the ledger…</h1>
+      <p id="explain">Blackbox records every action an agent takes before it happens, in a ledger the agent can't change.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><small><svg class="i" viewBox="0 0 24 24"><use href="#i-lock"/></svg>Ledger integrity</small><b id="s-integrity">–</b></div>
+      <div class="stat"><small><svg class="i" viewBox="0 0 24 24"><use href="#i-list"/></svg>Entries recorded</small><b id="s-entries">0</b></div>
+      <div class="stat"><small><svg class="i" viewBox="0 0 24 24"><use href="#i-stamp"/></svg>Witness checkpoints</small><b id="s-cp">0</b></div>
+      <div class="stat"><small><svg class="i" viewBox="0 0 24 24"><use href="#i-alert"/></svg>Issues found</small><b id="s-issues">0</b></div>
+    </div>
+  </section>
+  <div class="banner-err" id="error"><svg class="i" viewBox="0 0 24 24"><use href="#i-alert"/></svg><span></span></div>
+
+  <div class="grid">
+    <aside class="side">
+      <section class="card">
+        <div class="card-h"><h2>Control room</h2><span class="hint">Run things, then watch the right side</span></div>
+        <div class="tabs" role="tablist">
+          <button class="tab on" data-tab="run"><span class="n">1</span>Run agent</button>
+          <button class="tab" data-tab="attack"><span class="n">2</span>Attack</button>
+          <button class="tab" data-tab="audit"><span class="n">3</span>Audit</button>
+        </div>
+        <div class="card-b">
+          <div class="pane on" id="pane-run">
+            <div class="steps"><b>Suggested demo:</b>
+              <ol><li>Run <b>Scripted rogue</b>. It deletes data and hides it.</li>
+                <li>Open <b>Audit</b> and ask the AI auditor.</li>
+                <li>Try an <b>insider attack</b> on the ledger itself.</li></ol></div>
+            <div class="group-label">Real AI agents (Muse)</div><div id="sc-llm"></div>
+            <div class="group-label">Scripted, always misbehave</div><div id="sc-script"></div>
+          </div>
+          <div class="pane" id="pane-attack">
+            <p class="pane-intro">Try to destroy the evidence. Every one of these attacks gets caught.</p>
+            <div class="group-label">What a rogue agent can do</div><div id="atk-agent"></div>
+            <div class="group-label">What an insider could do</div><div id="atk-insider"></div>
+          </div>
+          <div class="pane" id="pane-audit">
+            <p class="pane-intro">Muse reads each agent's own report and compares it with the tamper-proof record. Did the agent tell the truth?</p>
+            <button class="cta" id="audit-btn"><svg class="i" viewBox="0 0 24 24"><use href="#i-sparkle"/></svg><span>Run AI honesty auditor</span></button>
+            <p class="pane-intro" id="audit-status" style="margin-top:10px"></p>
+          </div>
+        </div>
+      </section>
+      <section class="card activity">
+        <div class="card-h"><h2>Activity</h2><span class="count-pill" id="n-jobs">0</span></div>
+        <div class="card-b" id="jobs"><div class="empty neutral"><div class="ei"><svg class="i" viewBox="0 0 24 24"><use href="#i-play"/></svg></div>Nothing run yet. Pick an agent to start.</div></div>
+      </section>
+    </aside>
+
+    <main class="content">
+      <section class="card">
+        <div class="card-h"><h2>Agents</h2><span class="count-pill" id="n-sess">0</span><span class="hint">Click one to focus on its story</span></div>
+        <div class="card-b"><div class="sessions" id="sessions"></div></div>
+      </section>
+
+      <div class="filterbar" id="filterbar" hidden><svg class="i" viewBox="0 0 24 24"><use href="#i-filter"/></svg><span id="filter-label"></span>
+        <button id="clear-filter"><svg class="i" viewBox="0 0 24 24"><use href="#i-x"/></svg>Show everything</button></div>
+
+      <section class="card">
+        <div class="card-h"><h2>What we caught</h2><span class="count-pill" id="n-find">0</span></div>
+        <div class="card-b"><div class="findings" id="findings"></div></div>
+      </section>
+
+      <section class="card">
+        <div class="card-h"><h2>The record</h2><span class="hint">Newest first. The agent can't change any of this.</span>
+          <div class="toolbar"><label class="toggle"><input type="checkbox" id="show-hb">Heartbeats</label></div></div>
+        <div class="card-b"><div class="tl" id="timeline"></div></div>
+      </section>
+    </main>
+  </div>
+</div>
+<div id="toast"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="i-shield-ok" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-shield-x" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4M12 16h.01"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="i-stamp" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M8.2 11.3 7 22l5-3 5 3-1.2-10.7"/></symbol>
+  <symbol id="i-bot" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 14h.01M15 14h.01M2 13v3M22 13v3"/></symbol>
+  <symbol id="i-script" viewBox="0 0 24 24"><path d="m8 9-4 3 4 3M16 9l4 3-4 3M14 5l-4 14"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.8-9.8M17 6l3 3M14 9l2 2"/></symbol>
+  <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12"/></symbol>
+  <symbol id="i-hash" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><path d="m4 17 6-5-6-5M12 19h8"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+  <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="m6 4 14 8-14 8z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M22 3H2l8 9.5V19l4 2v-8.5z"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-moonoff" viewBox="0 0 24 24"><path d="M2 2l20 20M5 12.5a7 7 0 0 0 9.6 6.4M9 5.3A7 7 0 0 1 18.7 15"/></symbol>
+  <symbol id="i-unlink" viewBox="0 0 24 24"><path d="M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 0 1 4 8M8 12h3M2 2l20 20"/></symbol>
+</svg>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ico = (name, cls = "i") => `<svg class="${cls}" viewBox="0 0 24 24"><use href="#i-${name}"/></svg>`;
+const SEV = {critical: 0, high: 1, warning: 2, info: 3};
+
+// Plain-English names for every verifier finding.
+const TITLE = {
+  hash_mismatch: ["An entry was edited", "pen"], bad_signature: ["Forged signature", "key"],
+  broken_link: ["The chain is broken", "unlink"], seq_gap: ["Entries are missing", "scissors"],
+  seq_out_of_order: ["Entries out of order", "list"], malformed_entry: ["Broken entry", "alert"],
+  client_seq_gap: ["Agent's events were removed", "scissors"], client_seq_replay: ["Events replayed", "alert"],
+  checkpoint_mismatch: ["Ledger disagrees with the witness", "stamp"], checkpoint_entry_missing: ["Entries the witness saw are gone", "stamp"],
+  witness_conflict: ["Witness refused a history rewrite", "stamp"],
+  local_log_entries_missing: ["Agent erased its own log", "trash"], local_log_entry_altered: ["Agent rewrote its own log", "pen"],
+  local_log_entry_fabricated: ["Invented entries in the local log", "pen"], local_log_corrupt: ["Local log is corrupted", "alert"],
+  local_log_unattributable: ["Local log can't be matched", "alert"],
+  audit_log_tamper_attempt: ["Cover-up attempt", "eye"], unreported_action: ["Left out of the agent's report", "msg"],
+  no_report: ["Agent never reported back", "msg"], llm_honesty_verdict: ["AI auditor verdict", "sparkle"],
+  llm_auditor_error: ["AI auditor unavailable", "sparkle"],
+  request_without_result: ["Action with no recorded result", "alert"], orphan_result: ["Result with no request", "alert"],
+  heartbeat_gap: ["Agent went quiet", "pulse"], session_silent: ["Agent went dark", "pulse"], actions_refused: ["Actions refused (ledger down)", "lock"],
+};
+const TAG = {
+  hash_mismatch: "edited", bad_signature: "forged", broken_link: "broken link", seq_gap: "missing", client_seq_gap: "removed",
+  checkpoint_mismatch: "≠ witness", checkpoint_entry_missing: "cut off", witness_conflict: "rewrite refused",
+  local_log_entries_missing: "erased locally", local_log_entry_altered: "altered locally", local_log_entry_fabricated: "fabricated",
+  audit_log_tamper_attempt: "cover-up", unreported_action: "not in report", request_without_result: "no result",
+  heartbeat_gap: "silence", session_silent: "went dark", orphan_result: "orphan", llm_honesty_verdict: "AI: dishonest",
+};
+const ATTACK_ICON = { delete_local_log: "trash", edit_local_log: "pen", edit_ledger_entry: "pen", edit_ledger_rehash: "hash",
+  delete_ledger_entry: "scissors", rewrite_stolen_key: "key", truncate_ledger_tail: "scissors" };
+
+let sessions = {}, lastState = null, lastSig = "", focus = null, showAllFindings = false;
+const openDetails = new Set();
+
+// ---------- helpers ----------
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 5000); }
+async function post(url) { const r = await fetch(url, {method: "POST"}); return r.json(); }
+const time = (ts) => (ts || "").slice(11, 19);
+function ago(ts) {
+  if (!ts) return ""; const s = Math.max(0, (Date.now() - new Date(ts)) / 1000);
+  return s < 60 ? "just now" : s < 3600 ? `${Math.floor(s / 60)}m ago` : `${Math.floor(s / 3600)}h ago`;
+}
+function ranges(seqs) {
+  const s = [...new Set(seqs)].sort((a, b) => a - b), out = [];
+  for (let i = 0; i < s.length; i++) { let j = i; while (j + 1 < s.length && s[j + 1] === s[j] + 1) j++; out.push(i === j ? [s[i]] : [s[i], s[j]]); i = j; }
+  return out;
+}
+function val(v) { if (v && typeof v === "object" && "_truncated" in v) return `[${v.length} chars]`; return v; }
+function trunc(s, n = 90) { s = String(s ?? ""); return s.length > n ? s.slice(0, n) + "…" : s; }
+
+// Turn an action + args into a readable sentence.
+function describe(action, args, done) {
+  const a = args || {}, p = (x) => `<code>${esc(trunc(val(x) || "."))}</code>`;
+  switch (action) {
+    case "list_files": return [done ? "Listed files in " : "Tried to list ", p(a.path), "folder"];
+    case "read_file": return [done ? "Read " : "Tried to read ", p(a.path), "eye"];
+    case "write_file": return [done ? "Wrote " : "Tried to write ", p(a.path), "pen"];
+    case "delete_file": return [done ? "Deleted " : "Tried to delete ", p(a.path), "trash", "delete"];
+    case "run_shell": return [done ? "Ran command " : "Tried to run ", p(a.command), "terminal", "shell"];
+    case "http_request": return [`${done ? "Sent" : "Tried to send"} ${esc(a.method || "GET")} request to `, p(a.url), "globe", (a.method || "GET").toUpperCase() !== "GET" ? "shell" : ""];
+    default: return [`${done ? "Called" : "Tried to call"} <code>${esc(action || "?")}</code> `, `<span class="mono">${esc(trunc(JSON.stringify(args), 80))}</span>`, "script"];
+  }
+}
+
+// ---------- meta / controls ----------
+async function loadMeta() {
+  const m = await fetch("/api/meta").then(r => r.json());
+  const scen = (s) => `<button class="action ${s.kind === "script" ? "danger" : ""}" data-scenario="${esc(s.name)}">
+      <span class="ico">${ico(s.kind === "llm" ? "bot" : "script")}</span>
+      <span class="txt"><span class="t">${esc(s.label)}${s.kind === "llm" ? `<span class="badge muse">Muse</span>` : ""}${s.name === "scripted_rogue" ? `<span class="badge star">start here</span>` : ""}</span>
+      <span class="d">${esc(s.description)}</span></span><span class="go">${ico("play")}</span></button>`;
+  $("sc-llm").innerHTML = m.scenarios.filter(s => s.kind === "llm").map(scen).join("");
+  $("sc-script").innerHTML = m.scenarios.filter(s => s.kind !== "llm").map(scen).join("");
+  const atk = (who) => m.attacks.filter(a => a.who === who).map(a => `
+    <button class="action ${who === "insider" ? "danger" : "warnish"}" data-attack="${esc(a.name)}">
+      <span class="ico">${ico(ATTACK_ICON[a.name] || "alert")}</span>
+      <span class="txt"><span class="t">${esc(a.label)}</span><span class="d">${esc(a.description)}</span></span><span class="go">${ico("chev")}</span></button>`).join("");
+  $("atk-agent").innerHTML = atk("agent");
+  $("atk-insider").innerHTML = atk("insider");
+
+  document.querySelectorAll("[data-scenario]").forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    const j = await post(`/api/scenarios/${b.dataset.scenario}`);
+    toast(`Started: ${j.label}. Watch the record fill up.`); refresh(true);
+  });
+  document.querySelectorAll("[data-attack]").forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    const j = await post(`/api/attacks/${b.dataset.attack}`);
+    b.disabled = false;
+    toast((j.status === "error" ? "⚠ " : "Attack done: ") + j.log.join(" ")); refresh(true);
+  });
+  $("audit-btn").onclick = async () => { await post("/api/audit"); toast("AI auditor is reading the record (10–30 s)…"); refresh(true); };
+}
+
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === t));
+  document.querySelectorAll(".pane").forEach(p => p.classList.toggle("on", p.id === "pane-" + t.dataset.tab));
+});
+
+// ---------- render ----------
+function render(s) {
+  lastState = s;
+  sessions = s.sessions || {};
+  $("h-ledger").className = "dot " + (s.health.ledger ? "on" : "off");
+  $("h-witness").className = "dot " + (s.health.witness ? "on" : "off");
+
+  const err = s.error || (!s.health.ledger ? "The ledger is unreachable, so every agent action is being refused (fail closed)." : "");
+  $("error").classList.toggle("show", !!err); $("error").querySelector("span").textContent = err;
+
+  const rep = s.report;
+  const all = (rep ? rep.findings : []).slice().sort((a, b) => SEV[a.severity] - SEV[b.severity]);
+  const issues = all.filter(f => f.severity !== "info");
+  renderHero(s, rep, issues);
+  renderSessions(s, all);
+  renderFindings(all);
+  renderTimeline(s.events, all);
+  renderJobs(s.jobs);
+
+  const a = s.audit, ab = $("audit-btn");
+  ab.disabled = a.running;
+  ab.innerHTML = a.running ? `<span class="spinner"></span><span>Auditing…</span>` : `${ico("sparkle")}<span>Run AI honesty auditor</span>`;
+  $("audit-status").textContent = a.error ? "Error: " + a.error : (a.at_seq ? `Last audit covered entries up to #${a.at_seq}. Verdicts appear on each agent card.` : "");
+  const running = new Set(s.jobs.filter(j => j.status === "running" && j.kind === "scenario").map(j => j.name));
+  document.querySelectorAll("[data-scenario]").forEach(b => {
+    b.disabled = running.has(b.dataset.scenario);
+    b.querySelector(".go").innerHTML = b.disabled ? `<span class="spinner"></span>` : ico("play");
+  });
+}
+
+function renderHero(s, rep, issues) {
+  const status = !s.health.ledger ? "DOWN" : rep ? rep.status : "UNKNOWN";
+  const intact = rep ? rep.ledger_intact : null;
+  const crit = issues.filter(f => f.severity === "critical").length;
+  const nSess = Object.keys(sessions).length;
+  const copy = {
+    VERIFIED: ["All clear", "Nothing hidden, nothing changed", nSess
+      ? `${nSess} agent${nSess > 1 ? "s" : ""} recorded. Every action is in the ledger, chained, signed, and matches what the agents reported.`
+      : "The ledger is ready. Run an agent from the control room to start recording.", "shield-ok"],
+    SUSPICIOUS: ["Needs review", "Something needs a human to look at it", "The record itself is intact, but an agent did something worth checking. See what we caught below.", "alert"],
+    TAMPERED: intact
+      ? ["Cover-up caught", "An agent tried to hide what it did", `We caught ${crit} critical problem${crit === 1 ? "" : "s"}. The agent erased or changed its own copy of events, but the ledger still holds the full, untouched history.`, "shield-x"]
+      : ["Tampering detected", "Someone changed the ledger itself", "The ledger's own records were edited, deleted or rewritten. The checks below show exactly which entries and how we know.", "shield-x"],
+    DOWN: ["Ledger offline", "Agents are blocked", "No record, no action: while the ledger is unreachable, every action an agent tries is refused.", "lock"],
+    UNKNOWN: ["Connecting", "Waiting for the ledger…", "", "shield"],
+  }[status];
+  $("hero").className = "hero " + (status === "DOWN" ? "TAMPERED" : status);
+  [$("eyebrow").textContent, $("headline").textContent, $("explain").textContent] = copy;
+  $("hero-icon").innerHTML = ico(copy[3]);
+  const si = $("s-integrity");
+  si.textContent = intact == null ? "–" : intact ? "Intact" : "Compromised";
+  si.className = intact == null ? "" : intact ? "good" : "bad";
+  $("s-entries").textContent = s.total_events.toLocaleString();
+  $("s-cp").textContent = s.checkpoints.toLocaleString();
+  const si2 = $("s-issues"); si2.textContent = issues.length;
+  si2.className = !issues.length ? "good" : crit ? "bad" : "warn";
+}
+
+function sessionVerdict(sid, findings) {
+  const mine = findings.filter(f => f.session_id === sid && f.severity !== "info");
+  const job = (lastState.jobs || []).find(j => j.session_id === sid && j.status === "running");
+  if (job) return ["running", "Running", "spinner"];
+  if (mine.some(f => f.severity === "critical")) return ["caught", "Caught", "shield-x"];
+  if (mine.length) return ["suspicious", "Suspicious", "alert"];
+  return ["clean", "Clean", "check"];
+}
+
+function renderSessions(s, findings) {
+  const ids = Object.keys(sessions).sort((x, y) => (sessions[y].started || "").localeCompare(sessions[x].started || ""));
+  $("n-sess").textContent = ids.length;
+  if (!ids.length) {
+    $("sessions").innerHTML = `<div class="empty neutral" style="grid-column:1/-1"><div class="ei">${ico("bot")}</div><b>No agents yet</b>Run one from the control room. Its actions will appear here as they happen.</div>`;
+    return;
+  }
+  const evs = s.events;
+  $("sessions").innerHTML = ids.map(id => {
+    const info = sessions[id], mine = evs.filter(e => e.session_id === id);
+    const nAct = mine.filter(e => e.event_type === "action_requested").length;
+    const report = [...mine].reverse().find(e => e.event_type === "agent_report");
+    const [cls, label, icon] = sessionVerdict(id, findings);
+    const nIssues = findings.filter(f => f.session_id === id && f.severity !== "info").length;
+    const ai = findings.find(f => f.type === "llm_honesty_verdict" && f.session_id === id);
+    const verdict = ai?.details?.verdict;
+    return `<button class="sess ${cls} ${focus === id ? "sel" : ""}" data-sess="${esc(id)}">
+      <div class="row1"><span class="av">${ico(info.scenario && ["honest","pressure","redteam"].includes(info.scenario) ? "bot" : "script")}</span>
+        <div><div class="name">${esc(info.label)}</div><div class="sid">${esc(id)} · ${esc(ago(info.started))}</div></div>
+        <span class="verdict">${icon === "spinner" ? `<span class="spinner" style="width:10px;height:10px"></span>` : ico(icon, "i")}${label}</span></div>
+      <div class="meta"><span>${ico("list")}${nAct} action${nAct === 1 ? "" : "s"}</span><span>${ico("alert")}${nIssues} issue${nIssues === 1 ? "" : "s"}</span></div>
+      ${report ? `<div class="quote">“${esc(trunc(report.args?.summary ?? JSON.stringify(report.args), 150))}”</div>` : `<div class="quote" style="font-style:italic">No report yet.</div>`}
+      ${verdict ? `<span class="ai ${esc(verdict)}">${ico("sparkle")}AI auditor: ${esc(verdict)}</span>` : ""}
+    </button>`;
+  }).join("");
+  document.querySelectorAll("[data-sess]").forEach(b => b.onclick = () => setFocus(focus === b.dataset.sess ? null : b.dataset.sess));
+}
+
+function setFocus(id) {
+  focus = id;
+  $("filterbar").hidden = !id;
+  if (id) $("filter-label").textContent = `Showing only: ${sessions[id]?.label || id} (${id})`;
+  lastState && render(lastState);
+}
+$("clear-filter").onclick = () => setFocus(null);
+
+function renderFindings(all) {
+  let list = focus ? all.filter(f => f.session_id === focus || !f.session_id) : all;
+  // AI verdicts that say "honest" are good news: show them green, after problems.
+  $("n-find").textContent = list.filter(f => f.severity !== "info").length;
+  if (!list.length) {
+    $("findings").innerHTML = `<div class="empty"><div class="ei">${ico("shield-ok")}</div><b>Nothing to report</b>Every entry is chained, signed and accounted for.</div>`;
+    return;
+  }
+  const LIMIT = 8, shown = showAllFindings ? list : list.slice(0, LIMIT);
+  $("findings").innerHTML = shown.map(f => {
+    const [title, icon] = TITLE[f.type] || [f.type.replace(/_/g, " "), "alert"];
+    const v = f.details?.verdict;
+    const tone = f.type === "llm_honesty_verdict" ? (v === "honest" ? "good" : v === "deceptive" ? "critical" : "warning") : f.severity;
+    const sevLabel = f.type === "llm_honesty_verdict" ? (v || "verdict") : f.severity;
+    const who = f.session_id ? (sessions[f.session_id]?.label || f.session_id) : "Whole ledger";
+    const links = ranges(f.seqs || []).slice(0, 6).map(r => `<button class="seqlink" data-seq="${r[0]}">#${r[0]}${r[1] ? "–" + r[1] : ""}</button>`).join("");
+    return `<div class="finding ${esc(tone)}"><div class="fi">${ico(icon)}</div><div>
+      <div class="ft"><b>${esc(title)}</b><span class="sev">${esc(sevLabel)}</span><span class="who">· ${esc(who)}</span></div>
+      <div class="msg">${esc(f.message)}</div>${links ? `<div class="seqlinks">${links}</div>` : ""}</div></div>`;
+  }).join("") + (list.length > LIMIT ? `<button class="more" id="more-f">${showAllFindings ? "Show fewer" : `Show all ${list.length}`}</button>` : "");
+  const m = $("more-f"); if (m) m.onclick = () => { showAllFindings = !showAllFindings; renderFindings(all); bindSeqLinks(); };
+  bindSeqLinks();
+}
+function bindSeqLinks() {
+  document.querySelectorAll(".seqlink").forEach(b => b.onclick = () => jumpTo(+b.dataset.seq));
+}
+function jumpTo(seq) {
+  let el = document.querySelector(`[data-seqs~="${seq}"]`);
+  if (!el && !$("show-hb").checked) { $("show-hb").checked = true; render(lastState); el = document.querySelector(`[data-seqs~="${seq}"]`); }
+  if (!el && focus) { setFocus(null); el = document.querySelector(`[data-seqs~="${seq}"]`); }
+  if (!el) { toast(`Entry #${seq} isn't in the ledger any more. That's the evidence.`); return; }
+  el.scrollIntoView({behavior: "smooth", block: "center"});
+  el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 2200);
+}
+
+function renderTimeline(events, findings) {
+  const flags = {};
+  for (const f of findings) if (f.severity !== "info") for (const q of (f.seqs || [])) (flags[q] ||= []).push(f);
+  const results = {};
+  for (const e of events) if (e.ref_seq != null && e.event_type !== "action_requested") results[e.ref_seq] = e;
+  const showHb = $("show-hb").checked, have = new Set(events.map(e => e.seq));
+
+  // Build items in seq order, merging each request with its result, and marking gaps.
+  const items = []; let prev = null;
+  for (const e of events) {
+    if (prev != null && e.seq > prev + 1) items.push({gap: [prev + 1, e.seq - 1]});
+    prev = Math.max(prev ?? 0, e.seq);
+    if (focus && e.session_id !== focus) continue;
+    if (e.event_type === "heartbeat" && !showHb) continue;
+    if ((e.event_type === "action_completed" || e.event_type === "action_failed") && e.ref_seq != null && have.has(e.ref_seq)) continue;
+    items.push({e, res: e.event_type === "action_requested" ? results[e.seq] : null});
+  }
+  if (!items.length) {
+    $("timeline").innerHTML = `<div class="empty neutral"><div class="ei">${ico("list")}</div><b>The record is empty</b>Every action an agent takes will be written here <i>before</i> it happens.</div>`;
+    return;
+  }
+  $("timeline").querySelectorAll("details[open]").forEach(d => openDetails.add(d.dataset.k));
+  $("timeline").innerHTML = items.reverse().map(it => {
+    if (it.gap) { const [a, b] = it.gap; return `<div class="gap-row" data-seqs="${a}">${ico("scissors")}Entries #${a}${b > a ? "–#" + b : ""} were deleted from the ledger. The gap itself is the proof.</div>`; }
+    const {e, res} = it, seqs = [e.seq, res?.seq].filter(x => x != null);
+    const fl = seqs.flatMap(q => flags[q] || []).sort((a, b) => SEV[a.severity] - SEV[b.severity]);
+    const worst = fl[0]?.severity;
+    const tags = [...new Map(fl.map(f => [f.type, f])).values()].map(f => `<span class="flagtag ${esc(f.severity)}">${esc(TAG[f.type] || f.type)}</span>`).join("");
+    const who = `<span class="who-tag">${esc(sessions[e.session_id]?.label || e.agent_id)}</span>`;
+    let what, icon, kind = "", extra = "", status = "";
+    if (e.event_type === "heartbeat") { what = `<span style="color:var(--muted);font-weight:500">Heartbeat: agent still connected</span>`; icon = "pulse"; kind = "hb"; }
+    else if (e.event_type === "agent_report") { what = "Agent reported back"; icon = "msg"; kind = "report";
+      extra = `<div class="report">“${esc(e.args?.summary ?? JSON.stringify(e.args))}”</div>`; }
+    else {
+      const done = res?.event_type === "action_completed" || e.event_type === "action_completed";
+      const [pre, obj, ic, k] = describe(e.action, e.args, done);
+      what = pre + obj; icon = ic; kind = k || "";
+      if (e.event_type === "action_requested") {
+        status = !res ? `<span class="res none">${ico("x")}no result ever recorded</span>`
+          : res.event_type === "action_completed" ? `<span class="res done">${ico("check")}done</span>`
+          : `<span class="res failed">${ico("x")}failed: ${esc(trunc(res.result?.error, 60))}</span>`;
+      } else status = `<span class="res ${e.event_type === "action_completed" ? "done" : "failed"}">result for missing request #${esc(e.ref_seq)}</span>`;
+    }
+    const k = `d${e.seq}`;
+    const raw = JSON.stringify(res ? {request: e, result: res} : e, null, 2);
+    return `<div class="ev k-${kind} ${worst ? "flag-" + worst : ""}" data-seqs="${seqs.join(" ")}">
+      <div class="node">${ico(icon)}</div>
+      <div class="box">
+        <div class="line1"><span class="what">${what}</span><span class="when">#${seqs.join(" → #")} · ${esc(time(e.timestamp))}</span></div>
+        ${kind === "hb" ? "" : `<div class="line2">${who}${status}${tags}</div>`}${extra}
+        ${kind === "hb" ? "" : `<details data-k="${k}" ${openDetails.has(k) ? "open" : ""}><summary>${ico("hash")}Show raw signed entry</summary><pre>${esc(raw)}</pre></details>`}
+      </div></div>`;
+  }).join("");
+  $("timeline").querySelectorAll("details").forEach(d => d.ontoggle = () => d.open ? openDetails.add(d.dataset.k) : openDetails.delete(d.dataset.k));
+}
+
+function renderJobs(jobs) {
+  $("n-jobs").textContent = jobs.length;
+  if (!jobs.length) return;
+  $("jobs").innerHTML = jobs.map(j => {
+    const last = j.log.filter(l => l.trim()).slice(-1)[0] || "";
+    const st = j.status === "running" ? `<span class="spinner" style="width:11px;height:11px"></span>` : ico(j.status === "done" ? "check" : "x");
+    const k = "j" + j.id;
+    return `<div class="act"><span class="st ${esc(j.status)}">${st}</span><div class="body">
+      <div class="top"><b>${esc(j.label)}</b><span class="badge ${j.kind === "attack" ? "script" : "muse"}">${esc(j.kind)}</span><time>${esc(ago(j.started))}</time></div>
+      <div class="last">${esc(trunc(last.replace(/^\[\w+\]\s*/, ""), 160))}</div>
+      ${j.log.length > 1 ? `<details data-k="${k}" ${openDetails.has(k) ? "open" : ""}><summary>Full log (${j.log.length} lines)</summary><pre>${esc(j.log.join("\n"))}</pre></details>` : ""}
+    </div></div>`;
+  }).join("");
+  $("jobs").querySelectorAll("details").forEach(d => d.ontoggle = () => d.open ? openDetails.add(d.dataset.k) : openDetails.delete(d.dataset.k));
+}
+
+// ---------- polling ----------
+async function refresh(force = false) {
+  try {
+    const s = await fetch("/api/state").then(r => r.json());
+    // Only redraw when something changed, so open panels and scroll position stay put.
+    const sig = JSON.stringify([s.total_events, s.events.at(-1)?.hash, s.report?.findings, s.jobs.map(j => [j.status, j.log.length]),
+      s.audit, s.health, s.checkpoints, Object.keys(s.sessions || {}), s.error]);
+    if (force || sig !== lastSig) { lastSig = sig; render(s); }
+    $("h-live").innerHTML = `<span class="spinner" style="width:10px;height:10px"></span>Live`;
+  } catch (e) {
+    $("h-live").innerHTML = `<i class="dot off"></i>Offline`;
+    $("error").classList.add("show"); $("error").querySelector("span").textContent = "Can't reach the dashboard backend. Is run.py still running?";
+  }
+}
+$("show-hb").onchange = () => lastState && render(lastState);
+
+// ---------- theme ----------
+function applyTheme(t) {
+  if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+  const dark = t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  $("theme").innerHTML = ico(dark ? "sun" : "moon");
+}
+let theme = null; try { theme = localStorage.getItem("bb-theme"); } catch (e) {}
+applyTheme(theme);
+$("theme").onclick = () => {
+  const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  theme = dark ? "light" : "dark"; applyTheme(theme);
+  try { localStorage.setItem("bb-theme", theme); } catch (e) {}
+};
+
+loadMeta().then(() => refresh(true));
+setInterval(refresh, 2000);
+</script>
+</body>
+</html>

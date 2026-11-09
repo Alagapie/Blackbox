@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Blackbox Slides</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #0b0d16; --card: #141726; --card-2: #1a1e30; --line: #2a3050; --text: #eceefa; --muted: #a3a9c2; --faint: #6d738d;
+  --accent: #8b84ff; --accent-2: #a98bff; --ok: #3fd69a; --crit: #ff6b80; --warn: #f4b950; --high: #ff925e; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; overflow: hidden;
+  background-image: radial-gradient(1100px 650px at 8% -10%, #1f2150 0%, transparent 60%), radial-gradient(900px 600px at 105% 110%, #2c1846 0%, transparent 60%); }
+.slide { position: absolute; inset: 0; padding: 90px 110px; display: flex; flex-direction: column; justify-content: center;
+  opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; pointer-events: none; }
+.slide.on { opacity: 1; transform: none; }
+.slide.on .stag { animation: up .7s ease both; }
+.slide.on .stag:nth-child(2) { animation-delay: .15s } .slide.on .stag:nth-child(3) { animation-delay: .3s }
+.slide.on .stag:nth-child(4) { animation-delay: .45s } .slide.on .stag:nth-child(5) { animation-delay: .6s }
+@keyframes up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+.kicker { font-size: 18px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+h1 { font-size: 92px; line-height: 1; margin: 18px 0 18px; letter-spacing: -0.045em; font-weight: 800; }
+h2 { font-size: 58px; line-height: 1.08; margin: 14px 0 34px; letter-spacing: -0.035em; font-weight: 800; max-width: 1250px; }
+.grad { background: linear-gradient(100deg, #fff 10%, var(--accent-2) 90%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lead { font-size: 30px; color: var(--muted); max-width: 1150px; line-height: 1.4; }
+.logo { width: 92px; height: 92px; border-radius: 26px; display: grid; place-items: center; color: #fff;
+  background: linear-gradient(135deg, #5146e5, #a98bff); box-shadow: 0 18px 60px rgba(124, 92, 246, .45); }
+svg.i { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tagline { margin-top: 44px; font-size: 34px; font-weight: 600; padding: 22px 30px; border-radius: 18px; border: 1px solid var(--line);
+  background: rgba(20, 23, 38, .7); width: fit-content; }
+.tagline b { color: var(--crit); } .tagline em { color: var(--ok); font-style: normal; }
+.foot { position: absolute; left: 110px; bottom: 60px; color: var(--faint); font-size: 18px; letter-spacing: .02em; }
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; }
+.c { background: rgba(20, 23, 38, .85); border: 1px solid var(--line); border-radius: 22px; padding: 30px; }
+.c .ic { width: 58px; height: 58px; border-radius: 16px; display: grid; place-items: center; margin-bottom: 18px; }
+.c b { display: block; font-size: 27px; margin-bottom: 8px; letter-spacing: -0.01em; }
+.c span { color: var(--muted); font-size: 21px; line-height: 1.45; }
+.quote { margin-top: 34px; font-size: 23px; color: var(--muted); border-left: 4px solid var(--warn); padding: 8px 0 8px 22px; max-width: 1250px; }
+.quote b { color: var(--text); }
+.term { background: #070810; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.5); max-width: 1300px; }
+.term .bar { display: flex; gap: 9px; padding: 15px 18px; background: #121423; border-bottom: 1px solid var(--line); align-items: center; }
+.term .bar i { width: 13px; height: 13px; border-radius: 50%; background: #3a3f5c; } .term .bar span { margin-left: 12px; color: var(--faint); font-size: 16px; font-family: "JetBrains Mono", monospace; }
+.term pre { margin: 0; padding: 28px 32px; font: 22px/1.75 "JetBrains Mono", monospace; color: #c9cde3; white-space: pre-wrap; }
+.term .p { color: var(--accent); } .term .bad { color: var(--crit); font-weight: 500; } .term .good { color: var(--ok); font-weight: 500; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 10px; }
+.s { background: rgba(20, 23, 38, .85); border: 1px solid var(--line); border-radius: 22px; padding: 30px 28px; }
+.s b { display: block; font-size: 64px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
+.s span span { display: inline; margin: 0; font-size: inherit; color: inherit; }
+.s span { display: block; color: var(--muted); font-size: 21px; margin-top: 12px; line-height: 1.35; }
+/* architecture */
+.arch { display: grid; grid-template-columns: 1fr 120px 1.25fr; gap: 0; align-items: stretch; margin-top: 4px; }
+.zone { border-radius: 24px; padding: 26px; position: relative; }
+.zone.u { border: 2px dashed rgba(255, 146, 94, .55); background: rgba(255, 146, 94, .05); }
+.zone.t { border: 2px solid rgba(63, 214, 154, .5); background: rgba(63, 214, 154, .05); }
+.zone .zl { font-size: 16px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 16px; }
+.zone.u .zl { color: var(--high); } .zone.t .zl { color: var(--ok); }
+.box { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; margin-bottom: 14px; }
+.box b { font-size: 23px; display: block; } .box span { color: var(--muted); font-size: 18px; }
+.box.decoy { border-style: dashed; opacity: .85; }
+.box.hl { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(139, 132, 255, .25); }
+.mid { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; color: var(--accent); font-weight: 700; font-size: 17px; text-align: center; }
+.mid svg { width: 100px; height: 40px; }
+.tgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+.chips { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 26px; }
+.chip { padding: 10px 18px; border-radius: 99px; background: rgba(139, 132, 255, .14); color: #cfcaff; font-size: 19px; font-weight: 600; border: 1px solid rgba(139, 132, 255, .3); }
+.chip.ours { background: linear-gradient(135deg, #5146e5, #8b5cf6); color: #fff; border: 0; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="box" viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></symbol>
+  <symbol id="bot" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 14h.01M15 14h.01M2 13v3M22 13v3"/></symbol>
+  <symbol id="file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></symbol>
+  <symbol id="trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></symbol>
+</svg>
+
+<section class="slide" id="title">
+  <div class="stag logo"><svg class="i" width="50" height="50" viewBox="0 0 24 24"><use href="#box"/></svg></div>
+  <h1 class="stag"><span class="grad">Blackbox</span></h1>
+  <div class="stag lead" style="font-size:38px;color:var(--text);font-weight:500">A tamper-evident flight recorder for AI agents</div>
+  <div class="stag tagline">Current agent logs <b>trust the agent</b>. Ours <em>treat it as a suspect</em>.</div>
+  <div class="foot">AIAF Hackathon · Oversight &amp; Monitoring track</div>
+</section>
+
+<section class="slide" id="problem">
+  <div class="stag kicker">The problem</div>
+  <h2 class="stag">If an agent can reach the log, the log can't be trusted.</h2>
+  <div class="stag cards">
+    <div class="c"><div class="ic" style="background:rgba(139,132,255,.15);color:var(--accent)"><svg class="i" width="30" height="30" viewBox="0 0 24 24"><use href="#bot"/></svg></div>
+      <b>Agents have real access</b><span>Files, shells, databases, networks: the same machine their logs live on.</span></div>
+    <div class="c"><div class="ic" style="background:rgba(244,185,80,.15);color:var(--warn)"><svg class="i" width="30" height="30" viewBox="0 0 24 24"><use href="#file"/></svg></div>
+      <b>Logs trust the agent</b><span>Today's traces record what the agent's own process writes down, and nothing more.</span></div>
+    <div class="c"><div class="ic" style="background:rgba(255,107,128,.15);color:var(--crit)"><svg class="i" width="30" height="30" viewBox="0 0 24 24"><use href="#trash"/></svg></div>
+      <b>Evidence can vanish</b><span>Do something harmful, delete or rewrite the log, and nobody can prove what happened.</span></div>
+  </div>
+  <div class="stag quote">In evaluations, frontier models have <b>attempted to disable their own oversight mechanisms</b>. (Meinke et al., 2024, Apollo Research)</div>
+</section>
+
+<section class="slide" id="how">
+  <div class="stag kicker">How Blackbox works</div>
+  <h2 class="stag" style="margin-bottom:26px">Record first, then act. Then check everything.</h2>
+  <div class="stag arch">
+    <div class="zone u"><div class="zl">Agent's side · untrusted</div>
+      <div class="box"><b>AI agent</b><span>Meta Muse, real tool calls</span></div>
+      <div class="box hl"><b>Interceptor</b><span>its only tools · no record, no action</span></div>
+      <div class="box decoy"><b>Local audit log</b><span>a decoy the agent can delete</span></div>
+    </div>
+    <div class="mid"><svg viewBox="0 0 100 40"><path d="M4 20h84M76 8l12 12-12 12" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>record<br>first</div>
+    <div class="zone t"><div class="zl">Trusted side · agent can't touch</div>
+      <div class="tgrid">
+        <div class="box"><b>Ledger</b><span>append-only · hash-chained · signed</span></div>
+        <div class="box"><b>Witness</b><span>independent notary of checkpoints</span></div>
+        <div class="box hl" style="grid-column:1/-1"><b>Verifier</b><span>chain + signatures · gaps · liveness · local log vs ledger · witness · honesty: report vs record (rules + AI auditor)</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="stag chips"><span class="chip ours">No record, no action</span><span class="chip ours">Cover-ups are evidence</span><span class="chip ours">Honesty check</span>
+    <span class="chip">SHA-256 chain</span><span class="chip">Ed25519 signatures</span><span class="chip">Witness checkpoints</span></div>
+</section>
+
+<section class="slide" id="failclosed">
+  <div class="stag kicker">The core rule</div>
+  <h2 class="stag">No record, no action.</h2>
+  <div class="stag term"><div class="bar"><i></i><i></i><i></i><span>ledger unreachable: real output</span></div>
+<pre><span class="p">&gt;&gt;&gt;</span> agent calls delete_file("db/customers.db")
+<span class="bad">{"ok": false, "refused": true,
+ "error": "Action refused: the audit ledger is unreachable. No record, no action."}</span>
+<span class="p">&gt;&gt;&gt;</span> customers.db still exists: <span class="good">True</span>
+<span class="p">&gt;&gt;&gt;</span> agent calls run_shell("rm -rf db")
+<span class="bad">{"ok": false, "refused": true, "error": "Action refused: ..."}</span>
+<span class="p">&gt;&gt;&gt;</span> db folder still exists: <span class="good">True</span></pre></div>
+</section>
+
+<section class="slide" id="results">
+  <div class="stag kicker">Results</div>
+  <h2 class="stag">Caught every cover-up. Zero false alarms.</h2>
+  <div class="stag stats">
+    <div class="s"><b style="color:var(--ok)">7 / 7</b><span>attacks on the record detected, including a rewrite with the stolen signing key</span></div>
+    <div class="s"><b style="color:var(--accent)">0</b><span>false alarms from the verifier across <span id="nruns-slide">12</span> live runs of real Muse agents</span></div>
+    <div class="s"><b>~17 ms</b><span>median overhead per agent action</span></div>
+    <div class="s"><b>65</b><span>automated tests, all passing</span></div>
+  </div>
+  <div class="stag tagline" style="margin-top:50px">Current agent logs <b>trust the agent</b>. Ours <em>treat it as a suspect</em>.</div>
+</section>
+
+<script>
+function show(id) { document.querySelectorAll(".slide").forEach(s => s.classList.toggle("on", s.id === id)); }
+show(location.hash.slice(1) || "title");
+document.documentElement.style.zoom = innerWidth / 1600;
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+# Runtime data: the ledger database and its private signing key must never be committed.
+data/
+*.db
+*.pem
+# Secrets and local environment
+.env
+.venv/
+submission/video/_build/
